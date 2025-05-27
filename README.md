@@ -65,7 +65,7 @@ pip install httpx
 
 ### Start the Network and Deploy Chaincode
 1. **Bring up the network:**
-   - POST `/network/up` (via hlf-controller API or hlf-mcp tool)
+   - POST `/network/up` (via hlf-controller API or fabric-mcp tool)
 2. **Create a channel:**
    - POST `/channel/create` (default: `mychannel`)
 3. **Deploy chaincode:**
@@ -78,8 +78,8 @@ You can use the Python MCP tool to add into llm. so they can use the tool, to pe
 ---
 
 ## Integration
-- **Cursor:** Add the hlf-mcp tool to your `~/.cursor/mcp.json` (see hlf-mcp/README.md)
-- **Claude Desktop:** Add to `claude_desktop_config.json` (see hlf-mcp/README.md)
+- **Cursor:** Add the hlf-mcp tool to your `~/.cursor/mcp.json` (see fabric-mcp/README.md)
+- **Claude Desktop:** Add to `claude_desktop_config.json` (see fabric-mcp/README.md)
 
 ---
 
