@@ -28,8 +28,8 @@ A modular toolkit for managing Hyperledger Fabric test networks and chaincode li
 
 ### 1. Clone the Repo
 ```sh
-git clone <your-repo-url>
-cd <repo-root>
+git clone https://github.com/padmarajkore/hlf-fabric-agent.git
+cd hlf-controller
 ```
 
 ### 2. Set Up hlf-controller (Go REST API)
