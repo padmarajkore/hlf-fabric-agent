@@ -124,4 +124,4 @@ require github.com/hyperledger/fabric-contract-api-go v1.1.0
         return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":
-    mcp.run(transport='stdio')
+    mcp.run(transport="stdio")
