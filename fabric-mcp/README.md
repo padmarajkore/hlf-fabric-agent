@@ -20,8 +20,7 @@ A Python-based MCP (Multi-Chain Platform) tool for automating and orchestrating 
 2. **Install Python 3.9+**
 3. **Install dependencies:**
    ```sh
-   pip install httpx
-   # (and any other requirements for your MCP/agent framework)
+   pip install -r requirements.txt
    ```
 4. **Ensure Go is installed** (for chaincode writing):
    ```sh
