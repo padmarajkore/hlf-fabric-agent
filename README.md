@@ -45,9 +45,9 @@ go build -o hlf-controller
 ```
 - The API will be available at `http://localhost:8081`
 
-### 3. Set Up hlf-mcp (Python MCP Tool)
+### 3. Set Up fabric-mcp (Python MCP Tool)
 ```sh
-cd ../hlf-mcp
+cd ../fabric-mcp
 pip install httpx
 # (Optional) Install any other agent/MCP dependencies
 # Ensure Go is installed and in your PATH for chaincode writing
@@ -57,7 +57,7 @@ pip install httpx
 
 ## Environment Variables
 - `HLF_NETWORK_SCRIPT_PATH`: Path to your Fabric `network.sh` (for hlf-controller)
-- `HLF_API_BASE`: Base URL for the hlf-controller API (for hlf-mcp, default is `http://localhost:8081`)
+- `HLF_API_BASE`: Base URL for the hlf-controller API (for fabric-mcp, default is `http://localhost:8081`)
 
 ---
 
@@ -78,7 +78,7 @@ You can use the Python MCP tool to add into llm. so they can use the tool, to pe
 ---
 
 ## Integration
-- **Cursor:** Add the hlf-mcp tool to your `~/.cursor/mcp.json` (see fabric-mcp/README.md)
+- **Cursor:** Add the fabric-mcp tool to your `~/.cursor/mcp.json` (see fabric-mcp/README.md)
 - **Claude Desktop:** Add to `claude_desktop_config.json` (see fabric-mcp/README.md)
 
 ---
@@ -93,7 +93,7 @@ Add the following entry to your `~/.cursor/mcp.json` file to integrate the MCP t
     "command": "uv",
     "args": [
         "--directory",
-        "/Users/padamarajkore/Desktop/hlf-mcp",
+        "/Users/padamarajkore/Desktop/fabric-mcp",
         "run",
         "mcp_hlf_tool.py"
     ]
@@ -108,7 +108,7 @@ Add the following entry to your `claude_desktop_config.json` file (usually found
     "command": "/Users/padamarajkore/.local/bin/uv",
     "args": [
         "--directory",
-        "/Users/padamarajkore/Desktop/hlf-mcp",
+        "/Users/padamarajkore/Desktop/fabric-mcp",
         "run",
         "mcp_hlf_tool.py"
     ]
@@ -126,7 +126,7 @@ Add the following entry to your `claude_desktop_config.json` file (usually found
 ```
 .
 ├── hlf-controller/        # Go REST API server
-├── hlf-mcp/               # Python MCP tool
+├── fabric-mcp/               # Python MCP tool
 ├── README.md              # This file
 ```
 
