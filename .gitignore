@@ -1,0 +1,14 @@
+# Build artifact from Go hlf-controller
+hlf-controller/hlf-controller
+
+# Python cache files
+**/__pycache__/
+*.pyc
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+*~
+.*.swp
+.idea/
+.vscode/
