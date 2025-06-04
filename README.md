@@ -1,5 +1,7 @@
 # Hyperledger Fabric Agent Suite
 
+Works for test-network.
+
 A modular toolkit for managing Hyperledger Fabric test networks and chaincode lifecycle, featuring:
 - **hlf-controller**: A Go-based REST API for network and chaincode operations
 - **fabric-mcp**: A Python-based MCP tool for automation, scripting, and agent integration
