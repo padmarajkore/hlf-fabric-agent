@@ -14,7 +14,11 @@ A modular toolkit for managing Hyperledger Fabric test networks and chaincode li
 - Deploy, invoke, and query chaincode
 - Write and scaffold Go chaincode with dependencies
 - Integrate with agents, Cursor, or Claude Desktop
-- **Seamlessly integrate the Python MCP tool with LLMs (such as via Cursor or Claude Desktop), enabling LLM agents to perform Fabric network and chaincode operations automatically**
+- **Seamlessly integrate the Python MCP tool with LLMs (such as via Cursor or Claude Desktop), enabling LLM agents to perform Fabric network and chainco
+
+https://github.com/user-attachments/assets/75c3414a-3901-42ff-bf33-8f57b0ca96b4
+
+de operations automatically**
 
 ---
 
