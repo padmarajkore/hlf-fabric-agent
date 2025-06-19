@@ -39,6 +39,10 @@ cd hlf-controller
 cd hlf-controller
 # (Optional) Set the path to your network.sh if not default
 export HLF_NETWORK_SCRIPT_PATH=/path/to/network.sh
+
+https://github.com/user-attachments/assets/a1090104-2a3f-4c2d-a2b1-8582068e1378
+
+
 # Run the server
 go run main.go
 # or
