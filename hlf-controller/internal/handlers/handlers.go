@@ -6,10 +6,9 @@ import (
 	"log"
 	"net/http"
 	"os/exec"
-	"time"
 
 	"hlf-controller/internal/config"
-	types "hlf-controller/internal/types"
+	"hlf-controller/internal/types"
 	"hlf-controller/internal/utils"
 )
 
@@ -22,9 +21,9 @@ func UpNetworkHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("[INFO] Bringing network UP...")
 	cfg := config.LoadConfig()
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeouts.Network)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, cfg.NetworkScriptPath, "up")
+	cmd := exec.CommandContext(ctx, cfg.Network.ScriptPath, "up")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Printf("[ERROR] UpNetworkHandler: %v", err)
@@ -44,9 +43,9 @@ func DownNetworkHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("[INFO] Bringing network DOWN...")
 	cfg := config.LoadConfig()
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeouts.Network)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, cfg.NetworkScriptPath, "down")
+	cmd := exec.CommandContext(ctx, cfg.Network.ScriptPath, "down")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Printf("[ERROR] DownNetworkHandler: %v", err)
@@ -80,41 +79,18 @@ func DeployChaincodeHandler(w http.ResponseWriter, r *http.Request) {
 		channel = "mychannel"
 	}
 	cfg := config.LoadConfig()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeouts.Deploy)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, cfg.NetworkScriptPath, "deployCC", "-ccn", req.Name, "-ccp", req.Path, "-ccl", req.Language, "-ccv", version, "-c", channel)
+	cmd := exec.CommandContext(ctx, cfg.Network.ScriptPath, "deployCC", "-ccn", req.Name, "-ccp", req.Path, "-ccl", req.Language, "-ccv", version, "-c", channel)
 	output, err := cmd.CombinedOutput()
 	log.Printf("[DEBUG] DeployChaincodeHandler: deployCC output: %s", string(output))
 	if err != nil {
-		log.Printf("[ERROR] DeployChaincodeHandler: %v", err)
-	}
-	successIndicators := []string{
-		"Chaincode definition committed",
-		"Chaincode is installed",
-		"Committed chaincode definition",
-		"Query chaincode definition successful",
-		"Finished vendoring Go dependencies",
-	}
-	isSuccess := false
-	for _, indicator := range successIndicators {
-		if indicator != "" && string(output) != "" && (utils.ContainsIgnoreCase(string(output), indicator)) {
-			isSuccess = true
-			break
-		}
-	}
-	resp := types.Response{Status: "success", Message: "Output: " + string(output) + "\nError: "}
-	if err != nil {
-		resp.Message += err.Error()
-	}
-	if err != nil && !isSuccess {
-		resp.Status = "error"
 		log.Printf("[ERROR] DeployChaincodeHandler: Deployment failed. Output: %s, Error: %v", string(output), err)
-		utils.WriteJSON(w, http.StatusInternalServerError, resp)
+		utils.WriteJSON(w, http.StatusInternalServerError, types.Response{Status: "error", Message: string(output) + "\nError: " + err.Error()})
 		return
 	}
-	resp.Status = "success"
 	log.Printf("[SUCCESS] DeployChaincodeHandler: Chaincode deployed successfully. Output: %s", string(output))
-	utils.WriteJSON(w, http.StatusOK, resp)
+	utils.WriteJSON(w, http.StatusOK, types.Response{Status: "success", Message: string(output)})
 }
 
 func InvokeChaincodeHandler(w http.ResponseWriter, r *http.Request) {
@@ -131,33 +107,43 @@ func InvokeChaincodeHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, "Missing required fields: channel, chaincode, function")
 		return
 	}
+
+	cfg := config.LoadConfig()
 	invokeSpec := map[string]interface{}{
 		"function": req.Function,
 		"Args":     req.Args,
 	}
-	invokeSpecBytes, _ := json.Marshal(invokeSpec)
+	invokeSpecBytes, err := json.Marshal(invokeSpec)
+	if err != nil {
+		log.Printf("[ERROR] InvokeChaincodeHandler: Failed to marshal invoke spec: %v", err)
+		utils.WriteError(w, http.StatusInternalServerError, "Failed to create invoke spec")
+		return
+	}
+
 	args := []string{
 		"exec",
 		"-e", "CORE_PEER_TLS_ENABLED=true",
-		"-e", "CORE_PEER_LOCALMSPID=Org1MSP",
-		"-e", "CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt",
-		"-e", "CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp",
-		"-e", "CORE_PEER_ADDRESS=peer0.org1.example.com:7051",
+		"-e", "CORE_PEER_LOCALMSPID=" + cfg.Network.CLI.MSP_ID,
+		"-e", "CORE_PEER_TLS_ROOTCERT_FILE=" + cfg.Network.CLI.TLSRootCertFile,
+		"-e", "CORE_PEER_MSPCONFIGPATH=" + cfg.Network.CLI.MSPConfigPath,
+		"-e", "CORE_PEER_ADDRESS=" + cfg.Network.CLI.PeerAddress,
 		"cli",
 		"peer", "chaincode", "invoke",
-		"-o", "orderer.example.com:7050",
-		"--ordererTLSHostnameOverride", "orderer.example.com",
+		"-o", cfg.Network.Orderer.Address,
+		"--ordererTLSHostnameOverride", cfg.Network.Orderer.HostnameOverride,
 		"--tls",
-		"--cafile", "/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem",
+		"--cafile", cfg.Network.Orderer.TLSCaCert,
 		"-C", req.Channel,
 		"-n", req.Chaincode,
-		"--peerAddresses", "peer0.org1.example.com:7051",
-		"--tlsRootCertFiles", "/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt",
-		"--peerAddresses", "peer0.org2.example.com:9051",
-		"--tlsRootCertFiles", "/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt",
-		"-c", string(invokeSpecBytes),
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+
+	for _, peer := range cfg.Network.Peers {
+		args = append(args, "--peerAddresses", peer.Address, "--tlsRootCertFiles", peer.TLSRootCertFile)
+	}
+
+	args = append(args, "-c", string(invokeSpecBytes))
+
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeouts.Invoke)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "docker", args...)
 	output, err := cmd.CombinedOutput()
@@ -184,25 +170,33 @@ func QueryChaincodeHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, "Missing required fields: channel, chaincode, function")
 		return
 	}
+
+	cfg := config.LoadConfig()
 	querySpec := map[string]interface{}{
 		"function": req.Function,
 		"Args":     req.Args,
 	}
-	querySpecBytes, _ := json.Marshal(querySpec)
+	querySpecBytes, err := json.Marshal(querySpec)
+	if err != nil {
+		log.Printf("[ERROR] QueryChaincodeHandler: Failed to marshal query spec: %v", err)
+		utils.WriteError(w, http.StatusInternalServerError, "Failed to create query spec")
+		return
+	}
+
 	args := []string{
 		"exec",
 		"-e", "CORE_PEER_TLS_ENABLED=true",
-		"-e", "CORE_PEER_LOCALMSPID=Org1MSP",
-		"-e", "CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt",
-		"-e", "CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp",
-		"-e", "CORE_PEER_ADDRESS=peer0.org1.example.com:7051",
+		"-e", "CORE_PEER_LOCALMSPID=" + cfg.Network.CLI.MSP_ID,
+		"-e", "CORE_PEER_TLS_ROOTCERT_FILE=" + cfg.Network.CLI.TLSRootCertFile,
+		"-e", "CORE_PEER_MSPCONFIGPATH=" + cfg.Network.CLI.MSPConfigPath,
+		"-e", "CORE_PEER_ADDRESS=" + cfg.Network.CLI.PeerAddress,
 		"cli",
 		"peer", "chaincode", "query",
 		"-C", req.Channel,
 		"-n", req.Chaincode,
 		"-c", string(querySpecBytes),
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeouts.Query)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "docker", args...)
 	output, err := cmd.CombinedOutput()
@@ -229,9 +223,9 @@ func CreateChannelHandler(w http.ResponseWriter, r *http.Request) {
 		channel = "mychannel"
 	}
 	cfg := config.LoadConfig()
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeouts.Channel)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, cfg.NetworkScriptPath, "createChannel", "-c", channel)
+	cmd := exec.CommandContext(ctx, cfg.Network.ScriptPath, "createChannel", "-c", channel)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Printf("[ERROR] CreateChannelHandler: %v", err)

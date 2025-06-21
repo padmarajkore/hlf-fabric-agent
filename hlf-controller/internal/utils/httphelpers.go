@@ -3,18 +3,18 @@ package utils
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 )
 
 // ReadJSON reads and unmarshals JSON from the request body
 func ReadJSON(r *http.Request, v interface{}) error {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return err
 	}
-	r.Body.Close()
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+	defer r.Body.Close()
+	r.Body = io.NopCloser(bytes.NewBuffer(body))
 	return json.Unmarshal(body, v)
 }
 

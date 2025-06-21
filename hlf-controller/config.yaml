@@ -1,0 +1,23 @@
+network:
+  scriptPath: "" # Optional: if empty, will default to '~/fabric-samples/test-network/network.sh'
+  cli:
+    mspID: "Org1MSP"
+    peerAddress: "peer0.org1.example.com:7051"
+    tlsRootCertFile: "/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
+    mspConfigPath: "/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp"
+  orderer:
+    address: "orderer.example.com:7050"
+    hostnameOverride: "orderer.example.com"
+    tlsCaCert: "/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
+  peers:
+    - address: "peer0.org1.example.com:7051"
+      tlsRootCertFile: "/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
+    - address: "peer0.org2.example.com:9051"
+      tlsRootCertFile: "/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt"
+
+timeouts:
+  network: "2m"
+  deploy: "5m"
+  invoke: "2m"
+  query: "2m"
+  channel: "2m" 

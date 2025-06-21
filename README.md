@@ -6,21 +6,16 @@ https://github.com/user-attachments/assets/75c3414a-3901-42ff-bf33-8f57b0ca96b4
 Works for test-network.
 
 A modular toolkit for managing Hyperledger Fabric test networks and chaincode lifecycle, featuring:
-- **hlf-controller**: A Go-based REST API for network and chaincode operations
-- **fabric-mcp**: A Python-based MCP tool for automation, scripting, and agent integration
+- **hlf-controller**: A Go-based REST API for network and chaincode operations.
+- **hlf-mcp**: A Python-based MCP tool for automation, scripting, and agent integration.
 
 ---
 
 ## Features
-- Bring up/down a Fabric test network
-- Create channels
-- Deploy, invoke, and query chaincode
-- Write and scaffold Go chaincode with dependencies
-- Integrate with agents, Cursor, or Claude Desktop
-- **Seamlessly integrate the Python MCP tool with LLMs (such as via Cursor or Claude Desktop), enabling LLM agents to perform Fabric network and chainco
-
-
-de operations automatically**
+- **Automated Fabric Setup**: The `hlf-controller` automatically downloads and configures Hyperledger Fabric binaries and samples on first run.
+- **Dynamic Configuration**: Easily configure the entire Fabric network topology via a central `config.yaml` file.
+- **Full Lifecycle Management**: Bring up/down the network, create channels, deploy, invoke, and query chaincode via a simple REST API.
+- **Agent-Ready**: The `hlf-mcp` tool allows LLMs (like those in Cursor or Claude Desktop) to interact with your Fabric network seamlessly.
 
 ---
 
@@ -28,7 +23,6 @@ de operations automatically**
 - **Go** (1.18+)
 - **Python** (3.9+)
 - **pip** (for Python dependencies)
-- **Hyperledger Fabric test network** (see [fabric-samples](https://github.com/hyperledger/fabric-samples))
 
 ---
 
@@ -36,62 +30,65 @@ de operations automatically**
 
 ### 1. Clone the Repo
 ```sh
-git clone https://github.com/padmarajkore/hlf-fabric-agent.git
-cd hlf-controller
+git clone <your-repo-url>
+cd <repo-root>
 ```
 
-### 2. Set Up hlf-controller (Go REST API)
+### 2. Set Up and Run hlf-controller (Go REST API)
+The controller handles its own prerequisites.
 ```sh
 cd hlf-controller
-# (Optional) Set the path to your network.sh if not default
-export HLF_NETWORK_SCRIPT_PATH=/path/to/network.sh
-
-https://github.com/user-attachments/assets/a1090104-2a3f-4c2d-a2b1-8582068e1378
-
-
-# Run the server
 go run main.go
-# or
-go build -o hlf-controller
-./hlf-controller
 ```
-- The API will be available at `http://localhost:8081`
+- The first time you run this, it will check for `fabric-samples` and download them to your home directory if they are missing. The server will not start until this process is complete.
+- The API will then be available at `http://localhost:8081`.
 
-### 3. Set Up fabric-mcp (Python MCP Tool)
+### 3. Set Up hlf-mcp (Python MCP Tool)
 ```sh
-cd ../fabric-mcp
+cd ../hlf-mcp
 pip install httpx
 # (Optional) Install any other agent/MCP dependencies
-# Ensure Go is installed and in your PATH for chaincode writing
 ```
 
 ---
 
-## Environment Variables
-- `HLF_NETWORK_SCRIPT_PATH`: Path to your Fabric `network.sh` (for hlf-controller)
-- `HLF_API_BASE`: Base URL for the hlf-controller API (for fabric-mcp, default is `http://localhost:8081`)
+## Configuration
+
+### hlf-controller
+The Go controller is configured via the `hlf-controller/config.yaml` file. This is the primary way to define your network topology, including peer/orderer details, certificate paths, and timeouts.
+
+### Environment Variables
+- `HLF_CONFIG_PATH`: Path to a custom `config.yaml` file for the controller.
+- `HLF_NETWORK_SCRIPT_PATH`: Overrides the path to your Fabric `network.sh`. If not set, the path from `config.yaml` is used, which in turn defaults to `~/fabric-samples/test-network/network.sh`.
+- `HLF_API_BASE`: Base URL for the hlf-controller API (used by `hlf-mcp`, defaults to `http://localhost:8081`).
 
 ---
 
 ## How to Use
 
 ### Start the Network and Deploy Chaincode
-1. **Bring up the network:**
-   - POST `/network/up` (via hlf-controller API or fabric-mcp tool)
-2. **Create a channel:**
-   - POST `/channel/create` (default: `mychannel`)
-3. **Deploy chaincode:**
-   - POST `/chaincode/deploy` (specify name, path, language, etc.)
-4. **Invoke/query chaincode:**
-   - POST `/chaincode/invoke` and `/chaincode/query`
+1.  **Start the `hlf-controller` server** as described in the setup.
+2.  **Bring up the network:** Use the API to make a `POST` request to `/network/up`.
+3.  **Create a channel:** `POST` to `/channel/create` with `{ "channel": "mychannel" }`.
+4.  **Deploy chaincode:** `POST` to `/chaincode/deploy` with a body like:
+    ```json
+    {
+      "name": "fabcar",
+      "path": "../chaincode/fabcar/go",
+      "language": "go",
+      "version": "1.0",
+      "channel": "mychannel"
+    }
+    ```
+5.  **Invoke/query chaincode:** `POST` to `/chaincode/invoke` and `/chaincode/query` to interact with your deployed chaincode.
 
-You can use the Python MCP tool to add into llm. so they can use the tool, to perform the operations.
+You can perform these steps manually with a tool like `curl` or automate them by integrating the Python `hlf-mcp` tool with an LLM agent.
 
 ---
 
 ## Integration
-- **Cursor:** Add the fabric-mcp tool to your `~/.cursor/mcp.json` (see fabric-mcp/README.md)
-- **Claude Desktop:** Add to `claude_desktop_config.json` (see fabric-mcp/README.md)
+- **Cursor:** Add the hlf-mcp tool to your `~/.cursor/mcp.json` (see hlf-mcp/README.md).
+- **Claude Desktop:** Add to `claude_desktop_config.json` (see hlf-mcp/README.md).
 
 ---
 
@@ -105,7 +102,7 @@ Add the following entry to your `~/.cursor/mcp.json` file to integrate the MCP t
     "command": "uv",
     "args": [
         "--directory",
-        "/Users/padamarajkore/Desktop/fabric-mcp",
+        "/Users/padamarajkore/Desktop/hlf-mcp", //change it to your local path for hlf-mcp folder
         "run",
         "mcp_hlf_tool.py"
     ]
@@ -117,10 +114,10 @@ Add the following entry to your `claude_desktop_config.json` file (usually found
 
 ```json
 "hlf-controller": {
-    "command": "/Users/padamarajkore/.local/bin/uv",
+    "command": "/Users/padamarajkore/.local/bin/uv", //change it to your local path for uv binary
     "args": [
         "--directory",
-        "/Users/padamarajkore/Desktop/fabric-mcp",
+        "/Users/padamarajkore/Desktop/hlf-mcp", //change it to your local path for hlf-mcp folder
         "run",
         "mcp_hlf_tool.py"
     ]
@@ -137,12 +134,12 @@ Add the following entry to your `claude_desktop_config.json` file (usually found
 ## Project Structure
 ```
 .
-├── hlf-controller/        # Go REST API server
-├── fabric-mcp/               # Python MCP tool
+├── hlf-controller/        # Go REST API server with its own config.yaml
+├── hlf-mcp/               # Python MCP tool
 ├── README.md              # This file
 ```
 
 ---
 
 ## License
-MIT 
+MIT
