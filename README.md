@@ -66,26 +66,6 @@ The Go controller is configured via the `hlf-controller/config.yaml` file. This 
 
 ## How to Use
 
-### Start the Network and Deploy Chaincode
-1.  **Start the `hlf-controller` server** as described in the setup.
-2.  **Bring up the network:** Use the API to make a `POST` request to `/network/up`.
-3.  **Create a channel:** `POST` to `/channel/create` with `{ "channel": "mychannel" }`.
-4.  **Deploy chaincode:** `POST` to `/chaincode/deploy` with a body like:
-    ```json
-    {
-      "name": "fabcar",
-      "path": "../chaincode/fabcar/go",
-      "language": "go",
-      "version": "1.0",
-      "channel": "mychannel"
-    }
-    ```
-5.  **Invoke/query chaincode:** `POST` to `/chaincode/invoke` and `/chaincode/query` to interact with your deployed chaincode.
-
-You can perform these steps manually with a tool like `curl` or automate them by integrating the Python `hlf-mcp` tool with an LLM agent.
-
----
-
 ## Integration
 - **Cursor:** Add the hlf-mcp tool to your `~/.cursor/mcp.json` (see hlf-mcp/README.md).
 - **Claude Desktop:** Add to `claude_desktop_config.json` (see hlf-mcp/README.md).
